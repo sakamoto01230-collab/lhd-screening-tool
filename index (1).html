@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>採用スクリーニング＆スカウト文ツール｜ラオックスHD</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F6F3;
+  --surface: #FFFFFF;
+  --border: #E2DDD6;
+  --border-light: #EDE9E3;
+  --text: #1A1814;
+  --text-sub: #6B6560;
+  --text-muted: #9C9690;
+  --accent: #1A3A2A;
+  --accent-light: #EAF0EC;
+  --green: #1D7A4A;
+  --warn: #7A4A00;
+  --danger: #7A1A1A;
+  --danger-light: #FDE8E8;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue','Hiragino Sans','Hiragino Kaku Gothic ProN',Meiryo,sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+header { background: var(--accent); color: #fff; padding: 14px 24px; }
+header .logo { font-size: 10px; letter-spacing: 0.1em; opacity: 0.6; text-transform: uppercase; margin-bottom: 2px; }
+header h1 { font-size: 15px; font-weight: 500; }
+.main { max-width: 740px; margin: 0 auto; padding: 28px 16px 64px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
+.card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; }
+select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); font-size: 14px; font-family: inherit; color: var(--text); }
+select:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+textarea { resize: vertical; line-height: 1.65; }
+
+/* Steps */
+.steps { display: flex; gap: 0; margin-bottom: 24px; }
+.step { flex: 1; text-align: center; position: relative; }
+.step::after { content: ''; position: absolute; top: 14px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
+.step:last-child::after { display: none; }
+.step-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--border); color: var(--text-muted); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; position: relative; z-index: 1; transition: all 0.3s; }
+.step.active .step-circle { background: var(--accent); color: #fff; }
+.step.done .step-circle { background: var(--green); color: #fff; }
+.step-label { font-size: 11px; color: var(--text-muted); }
+.step.active .step-label { color: var(--accent); font-weight: 500; }
+
+/* Buttons */
+.btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-top: 4px; }
+.btn:hover { background: #2a5a3f; }
+.btn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-outline:hover { background: var(--accent-light); }
+.btn-copy-prompt { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.btn-copy-prompt:hover { background: #2a5a3f; }
+.btn-copy-prompt.copied { background: var(--green); }
+
+/* Info box */
+.info-box { background: var(--accent-light); border: 1px solid #B8D4BF; border-radius: var(--radius-sm); padding: 14px 16px; font-size: 13px; color: var(--accent); line-height: 1.7; margin-bottom: 14px; }
+.info-box ol { padding-left: 18px; margin-top: 6px; }
+.info-box li { margin-bottom: 4px; }
+.info-box a { color: var(--accent); font-weight: 600; }
+
+/* Result */
+.score-block { display: flex; gap: 20px; align-items: flex-start; }
+.score-left { min-width: 80px; text-align: center; }
+.score-num { font-size: 52px; font-weight: 700; line-height: 1; color: var(--accent); }
+.score-denom { font-size: 12px; color: var(--text-muted); }
+.score-right { flex: 1; }
+.score-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.badge-green { background: #D4EDDA; color: #1A5C32; }
+.badge-yellow { background: #FFF3CD; color: #7A4A00; }
+.badge-red { background: #F8D7DA; color: #7A1A1A; }
+.bar-bg { background: var(--bg); border-radius: 4px; height: 8px; margin-bottom: 10px; overflow: hidden; }
+.bar { height: 8px; border-radius: 4px; transition: width 1s ease; }
+.score-comment { font-size: 13px; line-height: 1.7; color: var(--text-sub); }
+.point-list { list-style: none; margin-top: 6px; }
+.point-list li { font-size: 13px; line-height: 1.65; padding: 6px 0 6px 16px; border-bottom: 1px solid var(--border-light); position: relative; }
+.point-list li:last-child { border-bottom: none; }
+.point-list li::before { content: "—"; position: absolute; left: 0; color: var(--text-muted); }
+.divider { height: 1px; background: var(--border-light); margin: 14px 0; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tab { padding: 6px 14px; font-size: 13px; font-family: inherit; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; background: transparent; color: var(--text-sub); }
+.tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Scout */
+.scout-block { margin-bottom: 16px; }
+.scout-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.scout-text { font-size: 13px; line-height: 1.8; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; white-space: pre-wrap; color: var(--text); }
+.copy-btn { padding: 5px 12px; font-size: 12px; font-family: inherit; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text-sub); margin-top: 6px; }
+.copy-btn:hover { background: var(--accent-light); color: var(--accent); }
+.copy-btn.copied { background: var(--accent-light); color: var(--green); border-color: var(--green); }
+.copy-all-btn { padding: 9px 18px; font-size: 13px; font-family: inherit; border-radius: var(--radius-sm); border: 1.5px solid var(--accent); cursor: pointer; background: var(--accent-light); color: var(--accent); font-weight: 500; margin-top: 4px; }
+.copy-all-btn:hover { background: var(--accent); color: #fff; }
+
+.ng-box { text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; background: var(--bg); border-radius: var(--radius-sm); }
+.reset-btn { padding: 8px 16px; font-size: 13px; font-family: inherit; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; background: transparent; color: var(--text-sub); margin-top: 12px; }
+.reset-btn:hover { background: var(--bg); }
+.err { color: var(--danger); font-size: 13px; margin-top: 6px; }
+.hidden { display: none !important; }
+
+/* Paste area */
+.paste-label { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Laox Holdings · HR Tool</div>
+  <h1>採用スクリーニング＆スカウト文ツール</h1>
+</header>
+
+<div class="main">
+
+  <!-- Steps indicator -->
+  <div class="steps">
+    <div class="step active" id="step1-ind"><div class="step-circle">1</div><div class="step-label">入力</div></div>
+    <div class="step" id="step2-ind"><div class="step-circle">2</div><div class="step-label">Claude依頼</div></div>
+    <div class="step" id="step3-ind"><div class="step-circle">3</div><div class="step-label">結果表示</div></div>
+  </div>
+
+  <!-- PHASE 1: 入力 -->
+  <div id="phase-input">
+    <div class="card">
+      <div class="card-label">ポジション</div>
+      <select id="pos">
+        <option value="">— ポジションを選択 —</option>
+        <option value="finance">財務経理責任者</option>
+        <option value="strategy">経営企画責任者</option>
+        <option value="marketing">広報・マーケティング責任者</option>
+        <option value="it">IT・DX責任者</option>
+        <option value="labor">グループ労務・給与計算担当</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-label">候補者レジュメ（ビズリーチよりそのまま貼り付け）</div>
+      <textarea id="resume" rows="12" placeholder="ビズリーチのレジュメをそのまま貼り付けてください..."></textarea>
+    </div>
+    <button class="btn-copy-prompt" id="copy-prompt-btn" onclick="copyPrompt()">
+      依頼文を生成してコピーする →
+    </button>
+
+    <div class="info-box" style="margin-top:14px;">
+      <strong>次のステップ</strong>
+      <ol>
+        <li>上のボタンで依頼文をコピー</li>
+        <li><a href="https://claude.ai" target="_blank">claude.ai</a> を開いてチャットに貼り付けて送信</li>
+        <li>Claudeの返答をコピーして「次へ」を押す</li>
+      </ol>
+    </div>
+
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="goToPhase2()">依頼文をコピーした → 次へ</button>
+  </div>
+
+  <!-- PHASE 2: 貼り付け -->
+  <div id="phase-paste" class="hidden">
+    <div class="card">
+      <div class="card-label">Claudeの返答を貼り付け</div>
+      <p class="paste-label">claude.aiからの返答テキストをそのままここに貼り付けてください。</p>
+      <textarea id="paste" rows="10" placeholder="Claudeの返答テキストをそのまま貼り付けてください..."></textarea>
+      <div class="err" id="parse-err"></div>
+    </div>
+    <button class="btn" onclick="parseResult()">結果を表示する</button>
+    <button class="reset-btn" onclick="backToPhase1()">← 入力に戻る</button>
+  </div>
+
+  <!-- PHASE 3: 結果 -->
+  <div id="phase-result" class="hidden">
+
+    <div class="card">
+      <div class="score-block">
+        <div class="score-left">
+          <div class="score-num" id="r-score">—</div>
+          <div class="score-denom">/ 100</div>
+        </div>
+        <div class="score-right">
+          <div class="score-badge" id="r-badge"></div>
+          <div class="bar-bg"><div class="bar" id="r-bar" style="width:0%"></div></div>
+          <p class="score-comment" id="r-comment"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">適合ポイント</div>
+      <ul class="point-list" id="r-fit"></ul>
+      <div class="divider"></div>
+      <div class="card-label">懸念点</div>
+      <ul class="point-list" id="r-concern"></ul>
+    </div>
+
+    <div class="card">
+      <div class="card-label">スカウト文</div>
+      <div id="scout-ng" class="ng-box hidden">スコアが60点未満のため、スカウト文は生成されていません。</div>
+      <div id="scout-ok" class="hidden">
+        <div class="tabs">
+          <button class="tab on" onclick="switchS('main')" id="ts-m">スカウト文</button>
+          <button class="tab" onclick="switchS('remind')" id="ts-r">リマインドスカウト文</button>
+        </div>
+        <div id="s-main">
+          <div class="scout-block"><div class="scout-label">① 件名</div><div class="scout-text" id="s1"></div><button class="copy-btn" onclick="cp('s1',this)">コピー</button></div>
+          <div class="scout-block"><div class="scout-label">② 本文</div><div class="scout-text" id="s2"></div><button class="copy-btn" onclick="cp('s2',this)">コピー</button></div>
+        </div>
+        <div id="s-remind" class="hidden">
+          <div class="scout-block"><div class="scout-label">③ 再送件名</div><div class="scout-text" id="s3"></div><button class="copy-btn" onclick="cp('s3',this)">コピー</button></div>
+          <div class="scout-block"><div class="scout-label">④ 再送本文</div><div class="scout-text" id="s4"></div><button class="copy-btn" onclick="cp('s4',this)">コピー</button></div>
+        </div>
+        <button class="copy-all-btn" onclick="cpAll()">スカウト文①〜④をまとめてコピー</button>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="backToPhase1()">← 別の候補者を分析する</button>
+  </div>
+
+</div>
+
+<script>
+const JD = {
+  finance: "財務経理責任者：上場企業での財務・経理実務7年以上、連結決算・開示業務、リーダーシップ経験必須。IPO準備・PMI・小売EC業界理解歓迎。自走するリーダー・変化をチャンスと捉える人物像。報酬900〜1400万円。ミッション：グループ連結決算・財務戦略立案・管理会計高度化・ガバナンス構築・PMI支援。会社：ラオックスHD（東証上場）グループ：シャディ・バーニーズNY・LGR。",
+  strategy: "経営企画責任者：上場企業または大手事業会社での経営企画7年以上、複数事業体横断の戦略立案・予実管理必須。投資銀行・戦略コンサル・PEファンド・組織再編PMI経験歓迎。机上の空論で終わらせない実行力・変革を楽しめる・経営陣のカウンターパートの人物像。ミッション：グループポートフォリオ最適化・中期経営計画策定・投資M&A戦略・PMIとガバナンス。会社：ラオックスHD（東証上場）グループ：シャディ・バーニーズNY・LGR。",
+  marketing: "広報・マーケティング責任者：企業広報またはマーケティング実務7年以上、上場企業広報経験、プロジェクトマネジメント力必須。PR会社・広告代理店・HD体制での広報経験・SNSブランディング・危機管理経験歓迎。自走するプロフェッショナル・ストーリーテラー・現場主義の人物像。ミッション：コーポレート広報・グループブランディング・インナーブランディング・マーケティング横断支援・IR広報。会社：ラオックスHD（東証上場）グループ：シャディ・バーニーズNY・LGR。",
+  it: "IT・DX責任者：上場企業または大手事業会社でのIT部門マネジメント7年以上、ITガバナンス構築・セキュリティ統制・業務改革またはPMI推進経験必須。小売EC物流業界でのIT責任者経験・基幹システムリプレイス・データ活用推進実績歓迎。現場主義のテックリーダー・自ら手を動かす実行者の人物像。ミッション：IT統制・ガバナンス・基幹システム管理・EC・データ活用基盤・BPO業務改革。会社：ラオックスHD（東証上場）グループ：シャディ・バーニーズNY・LGR。",
+  labor: "グループ労務・給与計算担当：給与計算および社会保険手続きの実務2年以上・多様な雇用形態への対応力・Excel基本操作必須。HD体制・複数拠点の労務管理・人事評価制度運用・採用人事企画への挑戦意欲歓迎。正確性とスピードを両立・自ら考えて行動できる・キャリアへの知的好奇心の人物像。ミッション：グループ給与計算・社保手続き・勤怠労務管理・評価制度運用支援。会社：ラオックスHD（東証上場）グループ：シャディ・バーニーズNY・LGR。"
+};
+
+const SCOUT = "スカウト文ルール：AIっぽい大げさな表現禁止。日本語カギカッコ禁止。候補者IDはBU番号のみ。自然体で落ち着いたトーン。件名は候補者の具体的な経歴を引用して個別感を出す。本文はBU番号様で始めはじめましての自己紹介から入る。末尾はラオックスホールディングス株式会社 グループ管理統括 坂本憲一で締める。カジュアル面談の提案で締める。再送は短めで自然につなぐ。";
+
+let scoutData = null;
+let currentBuId = '';
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('step'+i+'-ind');
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+}
+
+function copyPrompt() {
+  const pos = document.getElementById('pos').value;
+  const resume = document.getElementById('resume').value.trim();
+  if (!pos) { alert('ポジションを選択してください'); return; }
+  if (resume.length < 30) { alert('レジュメを入力してください'); return; }
+
+  currentBuId = 'BU' + (Math.floor(Math.random() * 9000000) + 1000000);
+
+  const prompt = `以下の求人要件と候補者レジュメを照合し、スクリーニング結果を下記フォーマットのプレーンテキストのみで返してください。前置き・後置き不要。
+
+【求人要件】${JD[pos]}
+【候補者レジュメ】${resume}
+
+【スコア】
+（0〜100の数値のみ）
+
+【判定】
+（◎ 強く推薦 / ○ 推薦 / △ 条件付き / ✕ 見送り推薦 のいずれか）
+
+【総評】
+（2〜3文）
+
+【適合ポイント】
+・適合ポイント1
+・適合ポイント2
+・適合ポイント3
+
+【懸念点】
+・懸念点1
+・懸念点2
+
+スコアが60点以上の場合のみ、続けて以下のスカウト文も返してください。
+
+${SCOUT}
+候補者ID：${currentBuId}
+求人要件：${JD[pos]}
+候補者レジュメ抜粋：${resume.slice(0, 800)}
+
+【件名①】
+（件名テキスト）
+
+【本文②】
+（本文テキスト）
+
+【再送件名③】
+（再送件名テキスト）
+
+【再送本文④】
+（再送本文テキスト）`;
+
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.getElementById('copy-prompt-btn');
+    btn.textContent = '✓ コピーしました！claude.aiに貼り付けてください';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '依頼文を生成してコピーする →';
+      btn.classList.remove('copied');
+    }, 3000);
+  });
+}
+
+function goToPhase2() {
+  const pos = document.getElementById('pos').value;
+  const resume = document.getElementById('resume').value.trim();
+  if (!pos) { alert('ポジションを選択してください'); return; }
+  if (resume.length < 30) { alert('レジュメを入力してください'); return; }
+  document.getElementById('phase-input').classList.add('hidden');
+  document.getElementById('phase-paste').classList.remove('hidden');
+  setStep(2);
+}
+
+function extract(raw, label, next) {
+  const pat = next
+    ? new RegExp(`【${label}】\\s*([\\s\\S]*?)(?=【${next}】)`)
+    : new RegExp(`【${label}】\\s*([\\s\\S]*?)$`);
+  const m = raw.match(pat);
+  return m ? m[1].trim() : '';
+}
+
+function parseResult() {
+  const raw = document.getElementById('paste').value.trim();
+  const errEl = document.getElementById('parse-err');
+  errEl.textContent = '';
+  if (!raw) { errEl.textContent = 'テキストを貼り付けてください'; return; }
+
+  const score = parseInt(extract(raw, 'スコア', '判定')) || 0;
+  const label = extract(raw, '判定', '総評');
+  const comment = extract(raw, '総評', '適合ポイント');
+  const fitRaw = extract(raw, '適合ポイント', '懸念点');
+  const concernRaw = extract(raw, '懸念点', score >= 60 ? '件名①' : '');
+
+  if (!score && !label) {
+    errEl.textContent = 'フォーマットが認識できません。Claudeの返答をそのまま貼り付けてください。';
+    return;
+  }
+
+  document.getElementById('r-score').textContent = score;
+  document.getElementById('r-comment').textContent = comment;
+
+  const badge = document.getElementById('r-badge');
+  badge.textContent = label;
+  const bar = document.getElementById('r-bar');
+  if (score >= 75) {
+    bar.style.background = '#1D7A4A'; bar.style.width = score + '%';
+    badge.className = 'score-badge badge-green';
+  } else if (score >= 60) {
+    bar.style.background = '#B07A00'; bar.style.width = score + '%';
+    badge.className = 'score-badge badge-yellow';
+  } else {
+    bar.style.background = '#B03030'; bar.style.width = score + '%';
+    badge.className = 'score-badge badge-red';
+  }
+
+  document.getElementById('r-fit').innerHTML = fitRaw.split('\n').filter(l => l.trim()).map(l => `<li>${l.replace(/^・/, '')}</li>`).join('');
+  document.getElementById('r-concern').innerHTML = concernRaw.split('\n').filter(l => l.trim()).map(l => `<li>${l.replace(/^・/, '')}</li>`).join('');
+
+  if (score >= 60) {
+    const s1 = extract(raw, '件名①', '本文②');
+    const s2 = extract(raw, '本文②', '再送件名③');
+    const s3 = extract(raw, '再送件名③', '再送本文④');
+    const s4 = extract(raw, '再送本文④', '');
+    scoutData = { s1, s2, s3, s4 };
+    document.getElementById('s1').textContent = s1;
+    document.getElementById('s2').textContent = s2;
+    document.getElementById('s3').textContent = s3;
+    document.getElementById('s4').textContent = s4;
+    document.getElementById('scout-ok').classList.remove('hidden');
+    document.getElementById('scout-ng').classList.add('hidden');
+  } else {
+    document.getElementById('scout-ng').classList.remove('hidden');
+    document.getElementById('scout-ok').classList.add('hidden');
+    scoutData = null;
+  }
+
+  document.getElementById('phase-paste').classList.add('hidden');
+  document.getElementById('phase-result').classList.remove('hidden');
+  setStep(3);
+}
+
+function switchS(t) {
+  document.getElementById('s-main').classList.toggle('hidden', t !== 'main');
+  document.getElementById('s-remind').classList.toggle('hidden', t !== 'remind');
+  document.getElementById('ts-m').classList.toggle('on', t === 'main');
+  document.getElementById('ts-r').classList.toggle('on', t === 'remind');
+}
+
+function cp(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    btn.textContent = '✓ コピーしました';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function cpAll() {
+  if (!scoutData) return;
+  const t = `① 件名\n${scoutData.s1}\n\n② 本文\n${scoutData.s2}\n\n③ 再送件名\n${scoutData.s3}\n\n④ 再送本文\n${scoutData.s4}`;
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = document.querySelector('.copy-all-btn');
+    const o = btn.textContent;
+    btn.textContent = '✓ コピーしました';
+    setTimeout(() => { btn.textContent = o; }, 2000);
+  });
+}
+
+function backToPhase1() {
+  document.getElementById('phase-paste').classList.add('hidden');
+  document.getElementById('phase-result').classList.add('hidden');
+  document.getElementById('phase-input').classList.remove('hidden');
+  document.getElementById('paste').value = '';
+  document.getElementById('parse-err').textContent = '';
+  scoutData = null;
+  setStep(1);
+}
+</script>
+</body>
+</html>
